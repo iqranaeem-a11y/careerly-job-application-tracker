@@ -48,6 +48,7 @@ Add screenshots of the running app to `docs/screenshots/`:
 ├── .gitignore
 ├── LICENSE
 ├── README.md
+├── render.yaml
 ├── client/
 │   ├── .env.example
 │   ├── index.html
@@ -220,7 +221,7 @@ There is no server-side logout endpoint: the client logs out by removing its loc
 
 ## Deployment
 
-Deploy the API to Render or Railway, use Neon or Supabase for hosted PostgreSQL, and deploy the static Vite client to Vercel. Create a separate production database; do not use a developer's local database or seed demo credentials in production.
+Deploy the API to Render, use Neon for hosted PostgreSQL, and deploy the static Vite client to Vercel. Use a separate production database and keep all credentials out of source control.
 
 ### Database on Neon or Supabase
 
@@ -230,28 +231,23 @@ Deploy the API to Render or Railway, use Neon or Supabase for hosted PostgreSQL,
 
 ### API on Render
 
-1. Create a managed PostgreSQL database in Render and copy its connection string. Prefer Render's internal connection string for a service in the same region.
-2. Create a **Web Service** from the repository. Set its root directory to `server`.
-3. Set the build command to:
+1. In Render, choose **New → Blueprint** and select this GitHub repository. The root `render.yaml` defines a free Web Service with its root directory set to `server`.
+2. When prompted, provide `DATABASE_URL` from Neon, a unique `JWT_SECRET` of at least 32 characters, and `CLIENT_URL` as the exact Vercel site origin (for example, `https://your-project.vercel.app`, with no trailing slash or `/api`). `NODE_ENV` is set to `production` by the Blueprint.
+3. The Blueprint build command is:
 
    ```sh
-   npm ci && npx prisma generate && npm run build
+   npm ci && npm run prisma:generate && npm run build
    ```
 
-4. Set the start command to (this applies committed migrations before the API starts):
+4. Its start command applies committed migrations before starting the API:
 
    ```sh
    npx prisma migrate deploy && npm start
    ```
 
-5. Add these service environment variables:
-   - `NODE_ENV=production`
-   - `DATABASE_URL` — the managed PostgreSQL connection string.
-   - `JWT_SECRET` — a unique, randomly generated secret of at least 32 characters.
-   - `CLIENT_URL` — the exact deployed Vercel frontend origin, without an `/api` path.
-   - `PORT` — omit it when Render supplies the port automatically.
-6. After deployment, check `https://<your-api-host>/api/health`.
-7. Avoid running the demo seed against a public production database. If intentionally seeding a private demo deployment, configure a unique `SEED_PASSWORD` first.
+5. After deployment, check `https://<your-api-host>/api/health`.
+
+Prisma CLI is a production dependency because the start command uses it to apply migrations.
 
 ### API on Railway
 
@@ -271,6 +267,16 @@ Deploy the API to Render or Railway, use Neon or Supabase for hosted PostgreSQL,
 5. For a custom domain, update `CLIENT_URL` to that origin as well. CORS only allows the configured client origin in production.
 
 The `client/vercel.json` rewrite sends client-side routes back to `index.html`, so refreshing `/board` or `/dashboard` works on Vercel. Set the API's `CLIENT_URL` to the deployed Vercel origin and redeploy the API if the value changed.
+
+### Seed the online demo account (optional)
+
+After the API has deployed and applied its migrations, temporarily set a unique `SEED_PASSWORD` in the Render service environment, then open its Shell and run:
+
+```sh
+node dist/prisma/seed.js
+```
+
+The idempotent seed creates or updates `demo@jobtracker.local` and adds sample jobs. Save the password you selected for the demo login, then remove `SEED_PASSWORD` from the service environment. Do not use the local-development fallback password for a publicly accessible deployment.
 
 ## Future improvements
 
