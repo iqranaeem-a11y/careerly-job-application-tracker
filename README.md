@@ -13,11 +13,11 @@ Careerly is a full-stack job search workspace for organizing applications, track
 
 ## Screenshots
 
-Add screenshots of the running app to `docs/screenshots/`:
-
 | Login | Kanban board | Dashboard |
 | --- | --- | --- |
-| ![Login page placeholder](./docs/screenshots/login.png) | ![Kanban board placeholder](./docs/screenshots/board.png) | ![Analytics dashboard placeholder](./docs/screenshots/dashboard.png) |
+| ![Careerly sign-in page](./docs/screenshots/login.png) | ![Kanban board showing sample job applications across their statuses](./docs/screenshots/board.png) | ![Analytics dashboard with application statistics and charts](./docs/screenshots/dashboard.png) |
+
+To regenerate these screenshots, configure the local PostgreSQL database and API environment as described below, install the root development dependencies with `npm install`, and install Playwright's Chromium browser with `npx playwright install chromium`. Then run `npm run screenshots` from the repository root. The script seeds the local database with the generic demo account and sample applications before starting the API and client. Use a local development database only.
 
 ## Features
 
@@ -48,7 +48,10 @@ Add screenshots of the running app to `docs/screenshots/`:
 ├── .gitignore
 ├── LICENSE
 ├── README.md
+├── package.json
 ├── render.yaml
+├── scripts/
+│   └── take-screenshots.js
 ├── client/
 │   ├── .env.example
 │   ├── index.html

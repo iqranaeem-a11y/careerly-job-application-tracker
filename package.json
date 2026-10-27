@@ -1,0 +1,11 @@
+{
+  "name": "careerly-job-application-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "screenshots": "node scripts/take-screenshots.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
