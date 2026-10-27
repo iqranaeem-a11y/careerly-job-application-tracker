@@ -77,9 +77,6 @@ To regenerate these screenshots, configure the local PostgreSQL database and API
     ├── .env.example
     ├── package.json
     ├── tsconfig.json
-    ├── vercel.json
-    ├── api/
-    │   └── [...path].ts
     ├── prisma/
     │   ├── schema.prisma
     │   ├── migrations/
@@ -131,7 +128,7 @@ npm run prisma:seed
 npm run dev
 ```
 
-Before running the migration, edit `server/.env`: set `DATABASE_URL` and `DIRECT_URL` to your database connection string and replace the example `JWT_SECRET` with a randomly generated secret of at least 32 characters. For a local database, both URLs can be the same. Keep `.env` out of version control. The commands above migrate the schema, seed demo data, and start the API.
+Before running the migration, edit `server/.env`: set `DATABASE_URL` to your database connection string and replace the example `JWT_SECRET` with a randomly generated secret of at least 32 characters. Keep `.env` out of version control. The commands above migrate the schema, seed demo data, and start the API.
 
 The API listens on `http://localhost:4000` by default. Check `GET http://localhost:4000/api/health` to verify it is running. The seed script creates or updates the demo account configured by `SEED_NAME`, `SEED_EMAIL`, and `SEED_PASSWORD` in `.env`, then upserts five example applications. Change the demo password anywhere other than a local development database.
 
@@ -163,9 +160,8 @@ Copy each `.env.example` to `.env` for local development and supply your own val
 | Variable | Required | Description |
 | --- | :---: | --- |
 | `NODE_ENV` | No | `development`, `test`, or `production`; defaults to `development`. |
-| `PORT` | No | HTTP port; defaults to `4000` for local development. |
+| `PORT` | No | HTTP port; defaults to `4000`. Hosts such as Render or Railway supply this in production. |
 | `DATABASE_URL` | Yes | PostgreSQL connection URL, including credentials and database name. |
-| `DIRECT_URL` | Yes for Prisma migrations | Direct PostgreSQL connection URL. For Neon serverless deployments, use its direct (non-pooled) connection string. |
 | `JWT_SECRET` | Yes | Private random signing secret of at least 32 characters. Do not use the example value in production. |
 | `CLIENT_URL` | No | Exact frontend origin allowed by production CORS; defaults to `http://localhost:5173`. |
 | `SEED_NAME` | No | Display name used by the optional seed script. |
@@ -228,22 +224,15 @@ There is no server-side logout endpoint: the client logs out by removing its loc
 
 ## Deployment
 
-For a no-card demo deployment, use Vercel Hobby for both the client and serverless API, and use your existing Neon Free PostgreSQL project. Keep all credentials out of source control.
+Deploy the API to Render, use Neon for hosted PostgreSQL, and deploy the static Vite client to Vercel. Use a separate production database and keep all credentials out of source control.
 
-### Database on Neon
+### Database on Neon or Supabase
 
-1. Use a PostgreSQL project/database in [Neon](https://neon.tech/).
-2. Set `DATABASE_URL` to Neon's pooled connection string for serverless requests and `DIRECT_URL` to its direct connection string for Prisma migrations.
-3. Keep both URLs private.
+1. Create a PostgreSQL project/database in [Neon](https://neon.tech/) or [Supabase](https://supabase.com/).
+2. Copy its connection string and configure it as the API's `DATABASE_URL` environment variable. Include `?schema=public` if the provider URL does not already select a schema.
+3. Keep credentials private. Use the provider-recommended direct connection string for Prisma migrations.
 
-### API on Vercel (no-card option)
-
-1. Import the GitHub repository as a separate Vercel project and set the project root directory to `server`.
-2. Add `DATABASE_URL`, `DIRECT_URL`, and a unique `JWT_SECRET` of at least 32 characters as production environment variables. Set `CLIENT_URL` to the exact client Vercel origin (without a trailing slash or `/api`).
-3. The Vercel function in `server/api/[...path].ts` serves the API. Its build command generates Prisma Client and applies committed migrations.
-4. After deployment, check `https://<your-api-host>/api/health`.
-
-### API on Render (alternative)
+### API on Render
 
 1. In Render, choose **New → Blueprint** and select this GitHub repository. The root `render.yaml` defines a free Web Service with its root directory set to `server`.
 2. When prompted, provide `DATABASE_URL` from Neon, a unique `JWT_SECRET` of at least 32 characters, and `CLIENT_URL` as the exact Vercel site origin (for example, `https://your-project.vercel.app`, with no trailing slash or `/api`). `NODE_ENV` is set to `production` by the Blueprint.
@@ -263,7 +252,7 @@ For a no-card demo deployment, use Vercel Hobby for both the client and serverle
 
 Prisma CLI is a production dependency because the start command uses it to apply migrations.
 
-### API on Railway (alternative)
+### API on Railway
 
 1. Create a Railway PostgreSQL service and an API service from the repository.
 2. Set the API service root directory to `server` and provide a `DATABASE_URL` reference to the PostgreSQL service's connection string.
@@ -276,7 +265,7 @@ Prisma CLI is a production dependency because the start command uses it to apply
 
 1. Import the repository into Vercel and set the project root directory to `client`.
 2. Use `npm run build` as the build command and `dist` as the output directory.
-3. Set the production environment variable `VITE_API_URL` to the deployed API base URL, including `/api` (for example `https://your-api.vercel.app/api`).
+3. Set the production environment variable `VITE_API_URL` to the deployed API base URL, including `/api` (for example `https://your-api.example.com/api`).
 4. Deploy the client. Set the API's `CLIENT_URL` to the resulting Vercel origin, then redeploy the API if that value changed.
 5. For a custom domain, update `CLIENT_URL` to that origin as well. CORS only allows the configured client origin in production.
 
@@ -284,17 +273,13 @@ The `client/vercel.json` rewrite sends client-side routes back to `index.html`, 
 
 ### Seed the online demo account (optional)
 
-After the API has deployed and applied its migrations, seed demo data from a trusted local machine using Neon's direct connection URL and a unique password:
+After the API has deployed and applied its migrations, temporarily set a unique `SEED_PASSWORD` in the Render service environment, then open its Shell and run:
 
-```powershell
-cd server
-$env:DATABASE_URL = "<Neon direct connection URL>"
-$env:DIRECT_URL = $env:DATABASE_URL
-$env:SEED_PASSWORD = "<unique demo password>"
-npm run prisma:seed
+```sh
+node dist/prisma/seed.js
 ```
 
-The idempotent seed creates or updates `demo@jobtracker.local` and adds sample jobs. Do not use the local-development fallback password for a publicly accessible deployment.
+The idempotent seed creates or updates `demo@jobtracker.local` and adds sample jobs. Save the password you selected for the demo login, then remove `SEED_PASSWORD` from the service environment. Do not use the local-development fallback password for a publicly accessible deployment.
 
 ## Future improvements
 
