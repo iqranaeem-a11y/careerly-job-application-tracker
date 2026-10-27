@@ -23,7 +23,7 @@ export const AppLayout = () => {
   return (
     <div className="min-h-screen bg-canvas text-ink transition-colors dark:bg-[#111a17] dark:text-slate-100">
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-[#111a17]/90">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 sm:flex-nowrap sm:px-6 lg:px-8">
           <NavLink to="/board" className="flex shrink-0 items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-forest text-white shadow-sm">
               <BriefcaseBusiness size={19} />
@@ -33,7 +33,7 @@ export const AppLayout = () => {
               <span className="hidden text-[11px] font-medium tracking-wide text-muted sm:block dark:text-slate-500">YOUR CAREER, ORGANIZED</span>
             </span>
           </NavLink>
-          <nav className="flex items-center gap-1 rounded-2xl bg-slate-50 p-1 dark:bg-slate-900/70">
+          <nav className="order-last flex w-full items-center justify-center gap-1 rounded-2xl bg-slate-50 p-1 dark:bg-slate-900/70 sm:order-none sm:w-auto">
             <NavLink to="/board" className={navClass}>
               <BriefcaseBusiness size={16} /> <span>Applications</span>
             </NavLink>
