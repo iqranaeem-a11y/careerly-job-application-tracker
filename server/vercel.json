@@ -1,0 +1,8 @@
+{
+  "buildCommand": "npx prisma generate && npm run build && npx prisma migrate deploy",
+  "functions": {
+    "api/[...path].ts": {
+      "maxDuration": 30
+    }
+  }
+}
